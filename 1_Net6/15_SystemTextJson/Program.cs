@@ -1,24 +1,18 @@
-﻿// Игнор цикличных ссылок
-// Сериализатор заменяет ссылку на null, а не игнорирует свойство полностью.
+﻿//Поддержка IAsyncEnumerable<T>
+
+//Сериализатор System.Text.Json теперь поддерживает IAsyncEnumerable<T>
+//При сериализации он их превращает в массивы:
 
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
-void Test()
+static async IAsyncEnumerable<int> PrintNumbers(int n)
 {
-    var node = new Node { Description = "Node 1" };
-    node.Next = node;
-
-    var opts = new JsonSerializerOptions { ReferenceHandler = ReferenceHandler.IgnoreCycles };
-
-    string json = JsonSerializer.Serialize(node, opts);
-    Console.WriteLine(json); 
-    
-    // Prints {"Description":"Node 1","Next":null}
+	for (int i = 0; i < n; i++) yield return i;
 }
 
-class Node
-{
-    public string Description { get; set; }
-    public object Next { get; set; }
-}
+using Stream stream = Console.OpenStandardOutput();
+var data = new { Data = PrintNumbers(3) };
+await JsonSerializer.SerializeAsync(stream, data); 
+
+// prints {"Data":[0,1,2]}
+
